@@ -58,7 +58,7 @@
         },
         "modules": {
           "ProcessingModule": {
-            "version": "1.0",
+            "version": "1.1",
             "type": "docker",
             "status": "running",
             "restartPolicy": "always",
@@ -81,7 +81,7 @@
             }
           },
           "MqttClientModule": {
-            "version": "1.0",
+            "version": "1.1",
             "type": "docker",
             "status": "running",
             "restartPolicy": "always",

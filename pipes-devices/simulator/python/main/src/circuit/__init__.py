@@ -93,20 +93,20 @@ class FlowSrc(Element):
 
 class Simulator:
     """Engine to process conservative energy circuits.
-        Could be registered Potential Sources, Transducers and Flow Maintainers or Flow Sources.
+       Could be registered Potential Sources, Transducers and Flow Maintainers or Flow Sources.
 
-        All components registered must be fully connected between them.
+       All components registered must be fully connected between them.
     """
 
     def __init__(self):
         """Initialize values."""
-        self.__net_list = set()
+        self._net_list = set()
         self.__node_list = list()
         self.__known_nodes = list()
         self.__unknown_nodes = list()
         self.__reference_node = 0
         self.__ref = None
-        self.__components = dict()
+        self._components = dict()
         self.logger = logging.getLogger()
 
     @property
@@ -121,7 +121,7 @@ class Simulator:
             raise TypeError(TYPE_ERROR_STR.substitute(value='pin', type='uuid.UUID'))
 
         pin_found = False
-        for net in self.__net_list:
+        for net in self._net_list:
             if pin in net:
                 pin_found = True
 
@@ -129,16 +129,29 @@ class Simulator:
             raise AttributeError('Component pin not found to assign as reference point.')
         self.__ref = pin
 
+    def _initialize_vectors(self):
+        """Init simulation vectors for a new simulation cycle."""
+        self.__node_list = list()
+        self.__known_nodes = list()
+        self.__unknown_nodes = list()
+        self.__reference_node = 0
+        self.logger.debug('Variables Initialized!')
+        self.logger.debug('\t %s %s %s %s', 
+                          self.__node_list,
+                          self.__known_nodes,
+                          self.__unknown_nodes,
+                          self.__reference_node)
+
     def _find_component(self, pin):
         """Return a found component."""
-        for component in self.__components.values():
+        for component in self._components.values():
             if pin in (component.one, component.two):
                 return component
         return None
 
     def _generate_node_list(self):
         """Create the list of nodes."""
-        for net in self.__net_list:
+        for net in self._net_list:
             if len(self.__node_list) == 0:
                 self.__node_list.append([net[0], net[1]])
             else:
@@ -159,7 +172,6 @@ class Simulator:
             self.logger.debug('NODE%s: %s', index, node)
 
     #TODO Locate only connected components (Not components on air)
-    #TODO Remove self.__components dependency
     def _generate_pre_sim_net_list(self):
         """NODE ALGORITHM STEP 1: Locate nets
             Check all nodes and generate the components and node net list.
@@ -184,11 +196,10 @@ class Simulator:
                 node_not_checked.remove(node)
 
         for index, net in enumerate(comp_net_list):
-            self.logger.debug(f'C_NET{index}: {net}')
+            self.logger.debug('COMP_NET%s: %s', index, net)
 
         return comp_net_list
 
-    #TODO check if REF in component list
     def _get_reference_node(self):
         """NODE ALGORITHM STEP 2: Select a reference node
             Extract reference node from list of nodes.
@@ -197,98 +208,100 @@ class Simulator:
             max_len = max([len(node) for node in self.__node_list])
             self.__reference_node = [index for index, node in enumerate(self.__node_list)
                                      if max_len == len(node)][0]
-            self.logger.info(f'REFERENCE NODE EVALUATED {self.__reference_node}')
         else:
             self.__reference_node = [index for index, node in enumerate(self.__node_list)
                                      if self.__ref in node][0]
-            self.logger.info(f'REFERENCE NODE FORCED {self.__reference_node}')
+            self.logger.info('REFERENCE NODE %s %s',
+                             'EVALUATED' if self.__ref is None else 'FORCED',
+                             self.__reference_node)
 
     def _get_known_nets(self, comp_net_list):
         """NODE ALGORITHM STEP 3.1: Extract the node algoritm known nets.
             A known net is the net associated to a PowerSrc component.
         """
-        self.logger.debug(f'INPUT self.__reference_node: {self.__reference_node}')
         known_nets = [net for net in comp_net_list
                       if self.__reference_node in net and isinstance(net[2], PowerSrc)]
-        self.logger.debug(f'known_nets: {known_nets}')
+        self.logger.debug('KNOWN NETS: %s', known_nets)
         return known_nets
 
     def _get_known_nodes(self, known_nets):
         """NODE ALGORITHM STEP 3.2: Extract the node algoritm known nodes.
-            Identify the known nodes of the node algoritm.
+           Identify the known nodes of the node algoritm.
         """
         for net in known_nets:
             if net[0] not in self.__known_nodes:
                 self.__known_nodes.append(net[0])
             if net[1] not in self.__known_nodes:
                 self.__known_nodes.append(net[1])
-        self.logger.debug(f'self.__known_nodes: {self.__known_nodes}')
+        self.logger.debug('KNOWN NODES: %s', self.__known_nodes)
 
     def _get_unknown_nodes(self):
-        """NODE ALGORITHM STEP 4: Conform the vector of unknown nodes to look for the node ecuations.
-            Extract from the self.__node_list all the nodes not present in self.__known_nodes.
-        """
-        self.__unknown_nodes = [index for index, node in enumerate(self.__node_list) if index not in self.__known_nodes]
-        self.logger.debug(f'self.__unknown_nodes: {self.__unknown_nodes}')
+        """NODE  ALGORITHM  STEP 4:  Conform  the  vector of u nknown  nodes to  look for  the  node
+           ecuations.
 
-    #TODO Remove self.__components dependency
+           Extract from the self.__node_list all the nodes not present in self.__known_nodes.
+        """
+        self.__unknown_nodes = [index for index, node in enumerate(self.__node_list)
+                                if index not in self.__known_nodes]
+        self.logger.debug('UNKNOWN NODES: %s', self.__unknown_nodes)
+
     def _find_target_net(self, comp_net_list, target_component):
         """Find information of the node unknown to check."""
         target_net = [net for net in comp_net_list if target_component in net][0]
-        self.logger.debug(f'\t NET: C_NET{target_net}')
+        self.logger.debug('\t COMPONENT NET: C_NET%s', target_net)
 
         return target_net
 
     def _extreme_known_value(self, known_nets, extreme_node):
         """Calculate a node coeficient pair."""
         extreme_net = [net for net in known_nets if extreme_node in (net[0], net[1])][0]
-        self.logger.debug(f'\t Extreme net: NET{extreme_net}')
+        self.logger.debug('\t EXTREME NET: %s', extreme_net)
         value_sign = 1.0 if extreme_net[2].one in self.__node_list[extreme_node] else -1.0
         extreme_value = extreme_net[2].ddp*value_sign
-        self.logger.debug(f'\t Extreme value: {extreme_value}')
+        self.logger.debug('\t EXTREME POWER VALUE: %s', extreme_value)
         return extreme_value
 
-    def _analize_node(self, node, known_nets, comp_net_list):
+    def _nodes_checker(self, node, known_nets, comp_net_list):
         result = 0.0
         coeficients = list()
         for pin in self.__node_list[node]:
-            self.logger.debug(f'Checking NODE{node}: PIN={pin}')
+            self.logger.debug('-- CHECKING NODE%s: PIN=%s --', node, pin)
             # Busqueda de nodo extremo
             target_comp = self._find_component(pin)
-            self.logger.debug(f'\t Component: {target_comp}')
+            self.logger.debug('\t TARGET COMPONENT: %s', target_comp)
             target_net = self._find_target_net(comp_net_list, target_comp)
 
             extreme_node = target_net[1] if target_net[0] == node else target_net[0]
-            self.logger.debug(f'\t Extreme node: NONE{extreme_node}')
+            self.logger.debug('\t EXTREME NODE: %s', extreme_node)
 
             if isinstance(target_comp, Transducers):
-                self.logger.debug(f'\t Component type: Transducers')
-                # Flujo de nodo target: se calcula coeficiente_target*(-1 si tipo_1 else 1)
-                # y añade coeficiente_target al grupo_r
+                self.logger.debug('\t COMPONENT TYPE: Transducers')
                 coeficients.append((node, 1.0/target_comp.res))
 
-                # si nodo_extremo es conocido:
                 if extreme_node in self.__known_nodes:
                     if extreme_node != self.__reference_node:
-                        result += self._extreme_known_value(known_nets, extreme_node)/target_comp.res
+                        raw_value = self._extreme_known_value(known_nets, extreme_node)
+                        result += raw_value/target_comp.res
                 else:
-                    extreme_ceof = -1.0/target_comp.res
-                    coeficients.append((extreme_node, extreme_ceof))
+                    raw_value = -1.0/target_comp.res
+                    coeficients.append((extreme_node, raw_value))
 
             if isinstance(target_comp, FlowSrc):
-                self.logger.debug(f'\t Component type: FlowSrc')
-                # Flujo de nodo target: se calcula coeficiente_target*(-1 si tipo_1 else 1)
-                # y añade coeficiente_target al grupo_
+                self.logger.debug('\t COMPONENT TYPE: FlowSrc')
                 result += target_comp.cur if pin == target_comp.one else -target_comp.cur
-                #self.logger.debug(f'\t Extreme value: NET{extreme_ceof}')
-            self.logger.debug(f'\t Result vector: {result}')
-            self.logger.debug(f'\t self.__components vector: {coeficients}')
+            self.logger.debug('\t CONSTANT VALUE: %s', result)
+            self.logger.debug('\t COEFICIENTS VALUES: %s', coeficients)
+
+        return result, coeficients
+
+    def _analize_node(self, node, known_nets, comp_net_list):
+        result, coeficients = self._nodes_checker(node, known_nets, comp_net_list)
 
         full_coefs = list(range(len(self.__unknown_nodes)))
-        for index, node in enumerate(self.__unknown_nodes):
+        for index, u_node in enumerate(self.__unknown_nodes):
             res_coef = 0.0
             for coef in coeficients:
-                if coef[0] == node:
+                if coef[0] == u_node:
                     res_coef += coef[1]
             full_coefs[index] = res_coef
         return (result, full_coefs.copy())
@@ -309,12 +322,7 @@ class Simulator:
                 if attempts == 1:
                     self.logger.error(exception)
 
-        # try:
-        #     solutions_vector = list(np.linalg.solve(coeficients_vector, contants_vector))
-        # except:
-        #     solutions_vector = list(range(len(self.__unknown_nodes)))
-
-        self.logger.debug(f'MATRIX SOLUTIONS: {solutions_vector}')
+        self.logger.debug('MATRIX SOLUTIONS: %s', solutions_vector)
         return solutions_vector
 
     def _solve_linear_unknown_powers(self, node_powers_vector, known_nets, comp_net_list):
@@ -323,22 +331,22 @@ class Simulator:
             # Por cada pin en el nodo:
             node_equation = self._analize_node(node, known_nets, comp_net_list)
             unknown_equation_matrix.append(node_equation)
-            self.logger.debug(f'\t EQ vector: {unknown_equation_matrix}')
-        self.logger.debug(f'unknown_equation_matrix: {unknown_equation_matrix}')
+            self.logger.debug('\t MATRIX UPDATE: %s', unknown_equation_matrix)
+        self.logger.debug('FINAL MATRIX: %s', unknown_equation_matrix)
         unknown_solutions = self._linear_solve_equations(unknown_equation_matrix)
 
         for index, node in enumerate(self.__unknown_nodes):
             node_powers_vector[node] = unknown_solutions[index]
 
-        self.logger.debug(f'POWER SOLUTIONS: {node_powers_vector}')
+        self.logger.debug('POWER SOLUTIONS: %s', node_powers_vector)
 
-    #TODO: Identical node Error
+    #TODO: Known Node Error
     def _solve_known_powers(self, node_powers_vector, known_nets):
         for net in known_nets:
             node = net[1] if self.__reference_node == net[0] else net[0]
             value = net[2].ddp if net[2].one in self.__node_list[node] else -net[2].ddp
             node_powers_vector[node] = value
-        self.logger.debug(f'POWER SOLUTIONS: {node_powers_vector}')
+        self.logger.debug('POWER SOLUTIONS: %s', node_powers_vector)
 
     def _update_component_values(self, comp_net_list, node_powers_vector):
         for net in comp_net_list:
@@ -369,20 +377,20 @@ class Simulator:
 
     def _check_net_list(self):
         """Check unconnected components in the list."""
-        for c_name, c_comp in self.__components.copy().items():
+        for c_name, c_comp in self._components.copy().items():
             found_pin_one = False
-            for conn_tuple in self.__net_list:
+            for conn_tuple in self._net_list:
                 if c_comp.one in conn_tuple:
                     found_pin_one = True
 
             found_pin_two = False
-            for conn_tuple in self.__net_list:
+            for conn_tuple in self._net_list:
                 if c_comp.two in conn_tuple:
                     found_pin_two = True
 
             if not found_pin_one and not found_pin_two:
-                self.__components.pop(c_name)
-                self.logger.info(f'Removed unused component {c_name}.')
+                self._components.pop(c_name)
+                self.logger.info('Removed unused component %s.', c_name)
             elif not found_pin_one:
                 raise AttributeError(f'Component {c_name} pin one on the air.')
             elif not found_pin_two:
@@ -398,8 +406,8 @@ class Simulator:
             self.logger.debug(type(node_l))
             raise TypeError(TYPE_ERROR_STR.safe_substitute(value='node_l', type='uuid.UUID'))
 
-        if node_l != node_r and (node_r, node_l) not in self.__net_list:
-            self.__net_list.add((node_l, node_r))
+        if node_l != node_r and (node_r, node_l) not in self._net_list:
+            self._net_list.add((node_l, node_r))
 
     def print_components_info(self):
         """Display information of the components to simulate."""
@@ -407,20 +415,22 @@ class Simulator:
         self.logger.info('-'*55)
         self.logger.info('| {0:^10} | {1:^10} | {2:^10} | {3:^12} |'.format(*headers))
         self.logger.info('-'*55)
-        for key, comp in self.__components.items():
+        for key, comp in self._components.items():
             str_out = f'| {key:<10} | {comp.ddp:>10.5f} | {comp.cur:>10.5f} | {comp.res:>12.5f} |'
             self.logger.info(str_out)
         self.logger.info('-'*55)
 
     def simulate(self):
         """Simulate the components properly connected."""
-        if len(self.__components) <= 2:
+        if len(self._components) <= 2:
             raise AttributeError('Add some components to the list.')
 
         self._check_net_list()
+        self._initialize_vectors()
         self._generate_node_list()
         comp_net_list = self._generate_pre_sim_net_list()
         self._get_reference_node()
+
         known_nets = self._get_known_nets(comp_net_list)
         self._get_known_nodes(known_nets)
         self._get_unknown_nodes()
@@ -444,14 +454,14 @@ class Simulator:
         if not isinstance(component, Element):
             raise TypeError(TYPE_ERROR_STR.substitute(value='component', type='Element'))
 
-        if name in self.__components:
+        if name in self._components:
             raise AttributeError('Name component is already in the list. Names must be unique.')
 
-        for c_name, c_el in self.__components.items():
+        for c_name, c_el in self._components.items():
             if component == c_el:
                 raise AttributeError('component is already in the list.')
 
-        self.__components[name] = component
+        self._components[name] = component
 
     def deregister_component(self, name):
         """Remove a component from the Simulator component list.
@@ -462,21 +472,21 @@ class Simulator:
 
         component_to_remove = self.get_component(name)
 
-        for conn_tuple in self.__net_list.copy():
+        for conn_tuple in self._net_list.copy():
             if component_to_remove.one in conn_tuple or component_to_remove.two in conn_tuple:
-                self.__net_list.remove(conn_tuple)
+                self._net_list.remove(conn_tuple)
 
-        return self.__components.pop(name)
+        return self._components.pop(name)
 
     def get_component(self, name):
         """Return the component Identify by the string name."""
         if not isinstance(name, str):
             raise TypeError(TYPE_ERROR_STR.substitute(value='name', type='str'))
 
-        if name not in self.__components:
+        if name not in self._components:
             raise AttributeError('Component not found.')
 
-        return self.__components[name]
+        return self._components[name]
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

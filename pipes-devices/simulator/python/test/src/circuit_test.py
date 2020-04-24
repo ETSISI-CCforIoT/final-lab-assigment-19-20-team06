@@ -44,7 +44,6 @@ import logging
 import circuit
 
 logging.basicConfig(level=logging.INFO)
-
 SM = circuit.Simulator()
 
 SM.register_component('WATER_IN_1', circuit.PowerSrc(ddp=100))
@@ -63,17 +62,12 @@ SM.register_component('PIPE_2_S2', circuit.Transducers(res=1))
 SM.register_component('TAP_1', circuit.Transducers(res=1))
 SM.register_component('TAP_2', circuit.Transducers(res=1))
 SM.register_component('TAP_3', circuit.Transducers(res=1))
-# SM.register_component('SUPER_FUGA', circuit.Transducers(res=1))
 
 SM.connect(SM.get_component('WATER_IN_1').one, SM.get_component('PIPE_1_S1').one)
 SM.connect(SM.get_component('PIPE_1_S1').two, SM.get_component('PIPE_1_S2').one)
 SM.connect(SM.get_component('PIPE_1_S2').two, SM.get_component('PIPE_1_S3').one)
 SM.connect(SM.get_component('PIPE_1_S3').two, SM.get_component('PIPE_1_S4').one)
 SM.connect(SM.get_component('PIPE_1_S4').two, SM.get_component('PIPE_1_S5').one)
-
-# SM.connect(SM.get_component('PIPE_1_S4').two, SM.get_component('SUPER_FUGA').one)
-# SM.connect(SM.get_component('SUPER_FUGA').two, SM.get_component('WATER_IN_1').two)
-
 SM.connect(SM.get_component('PIPE_1_S5').two, SM.get_component('PIPE_1_S6').one)
 SM.connect(SM.get_component('PIPE_1_S6').two, SM.get_component('PIPE_2_S1').one)
 SM.connect(SM.get_component('PIPE_2_S1').two, SM.get_component('PIPE_2_S2').one)

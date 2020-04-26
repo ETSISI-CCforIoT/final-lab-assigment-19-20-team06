@@ -4,7 +4,17 @@ import logging
 from string import Template
 import numpy as np
 
+import ssl
+import sys
+
+import paho.mqtt.client as paho
+import json
+
 TYPE_ERROR_STR = Template('Only allowed $value of type $type')
+
+broker="40.68.175.17"
+port=1883
+
 
 def _find_node(pin, lon):
     """Return node index in lon."""
@@ -488,6 +498,8 @@ class Simulator:
 
         return self._components[name]
 
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     EXAMPLE_SIM = Simulator()
@@ -538,27 +550,27 @@ if __name__ == '__main__':
     #EXAMPLE_SIM.deregister_component('V_ONE')
 
     EXAMPLE_SIM.simulate()
-	
-# import paho.mqtt.client as paho
-# import json
-
-# broker="40.68.175.17"
-# port=1883
-
-# def on_publish(client,userdata,result):             #create function for callback
-    # print("data published \n")
-    # pass
-
-# msg=dict()
-# msg["pipe"]="pipe1"
-# msg["sensor"]="sensor1"
-# msg["pipe_sensor"]="pipe1-sensor1"
-# msg["flow"]=1
-# msg["unit"]="L/min"
-# j_msg=json.dumps(msg)
 
 
-# client1= paho.Client("control1")                         #create client object
-# client1.on_publish = on_publish                          #assign function to callback
-# client1.connect(broker,port)                             #establish connection
-# ret= client1.publish("floors/floor1/data",j_msg)         #publish
+    # preparar mensaje mqtt
+    def component_data(element, id, unit):
+        jcomp = dict()
+        jcomp["id"] = id
+        jcomp["flow"] = EXAMPLE_SIM.get_component(element).cur
+        jcomp["unit"] = unit
+        msgcomp = json.dumps(jcomp)
+        return msgcomp
+    #Sending data to the mqtt broker
+
+
+#    jPipe1 = dict()
+#    jPipe1["id"] = "pipe1-sensor1"
+#    jPipe1["flow"] = EXAMPLE_SIM.get_component('R_THREE').cur
+#    jPipe1["unit"] = "L/min"
+
+    msgcomp = component_data("R_ONE", "pipe1-sensor1", "L/min")
+
+
+    client = paho.Client("control")                         # create client object
+    client.connect(broker, port)                            # establish connection
+    ret = client.publish("floors/floor1/data", msgcomp)  # publish

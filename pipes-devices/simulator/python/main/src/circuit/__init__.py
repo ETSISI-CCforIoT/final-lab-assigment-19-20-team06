@@ -538,3 +538,27 @@ if __name__ == '__main__':
     #EXAMPLE_SIM.deregister_component('V_ONE')
 
     EXAMPLE_SIM.simulate()
+	
+# import paho.mqtt.client as paho
+# import json
+
+# broker="40.68.175.17"
+# port=1883
+
+# def on_publish(client,userdata,result):             #create function for callback
+    # print("data published \n")
+    # pass
+
+# msg=dict()
+# msg["pipe"]="pipe1"
+# msg["sensor"]="sensor1"
+# msg["pipe_sensor"]="pipe1-sensor1"
+# msg["flow"]=1
+# msg["unit"]="L/min"
+# j_msg=json.dumps(msg)
+
+
+# client1= paho.Client("control1")                         #create client object
+# client1.on_publish = on_publish                          #assign function to callback
+# client1.connect(broker,port)                             #establish connection
+# ret= client1.publish("floors/floor1/data",j_msg)         #publish

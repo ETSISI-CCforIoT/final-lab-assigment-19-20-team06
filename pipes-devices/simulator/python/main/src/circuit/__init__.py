@@ -9,6 +9,7 @@ import sys
 
 import paho.mqtt.client as paho
 import json
+import time
 
 TYPE_ERROR_STR = Template('Only allowed $value of type $type')
 
@@ -499,16 +500,17 @@ class Simulator:
         return self._components[name]
 
 
-def component_data(component, id, unit):              # prepare mqtt message
+def component_data(component, id, unit):            # prepare mqtt message
     jcomp = dict()
     jcomp["id"] = id
-    jcomp["flow"] = EXAMPLE_SIM.get_component(component).cur
+    jcomp["flow"] = round(EXAMPLE_SIM.get_component(component).cur,4)
     jcomp["unit"] = unit
+    jcomp["timestamp"] = time.time()
     msgcomp = json.dumps(jcomp)
     return msgcomp
 
 def on_publish(client,userdata,result):             #create function for callback
-    print("Data published succesfully")
+    print(index+" "+"data published succesfully")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

@@ -499,6 +499,16 @@ class Simulator:
         return self._components[name]
 
 
+def component_data(component, id, unit):              # prepare mqtt message
+    jcomp = dict()
+    jcomp["id"] = id
+    jcomp["flow"] = EXAMPLE_SIM.get_component(component).cur
+    jcomp["unit"] = unit
+    msgcomp = json.dumps(jcomp)
+    return msgcomp
+
+def on_publish(client,userdata,result):             #create function for callback
+    print("Data published succesfully")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
@@ -551,26 +561,25 @@ if __name__ == '__main__':
 
     EXAMPLE_SIM.simulate()
 
+    publish_list={
+        "R_ONE":"pipe1-sensor1",
+        "R_TWO":"pipe1-sensor2",
+        "R_THREE":"pipe1-sensor3",
+        # "R_FOR":"pipe2-sensor1",
+        # "R_FIVE":"pipe2-senor2",
+        # "R_SIX":"pipe3-sensor3",
+        # "R_SEVEN":"pipe3-sensor1",
+        # "R_EIGHT":"pipe3-sensor2",
+        # "R_NINE":"pipe3-sensor3",
+        # "R_TEN":"pipe4-sensor1",
+        # "R_ELEVEN":"pipe4-sensor2",
+        # "R_TWELVE":"pipe4-sensor3"
+    }
 
-    # preparar mensaje mqtt
-    def component_data(element, id, unit):
-        jcomp = dict()
-        jcomp["id"] = id
-        jcomp["flow"] = EXAMPLE_SIM.get_component(element).cur
-        jcomp["unit"] = unit
-        msgcomp = json.dumps(jcomp)
-        return msgcomp
-    #Sending data to the mqtt broker
+    client = paho.Client("pipelines")                         # create client object
+    client.connect(broker, port)                              # establish connection
+    client.on_publish = on_publish                            # assign function to callback
 
-
-#    jPipe1 = dict()
-#    jPipe1["id"] = "pipe1-sensor1"
-#    jPipe1["flow"] = EXAMPLE_SIM.get_component('R_THREE').cur
-#    jPipe1["unit"] = "L/min"
-
-    msgcomp = component_data("R_ONE", "pipe1-sensor1", "L/min")
-
-
-    client = paho.Client("control")                         # create client object
-    client.connect(broker, port)                            # establish connection
-    ret = client.publish("floors/floor1/data", msgcomp)  # publish
+    for index in publish_list:
+        msgcomp = component_data(index,publish_list[index], "L/min")
+        ret = client.publish("floors/floor1/data", msgcomp)  # publish

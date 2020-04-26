@@ -512,6 +512,19 @@ def component_data(component, id, unit):            # prepare mqtt message
 def on_publish(client,userdata,result):             #create function for callback
     print(index+" "+"data published succesfully")
 
+def on_connect(client, userdata, flags, rc):
+    print('connected (%s)' % client._client_id)
+    client.subscribe(topic='floors/floor1/alarms', qos=0)
+
+def on_message(client, userdata, message):
+    print('------------------------------')
+    print('topic: %s' % message.topic)
+    print('payload: %s' % message.payload)
+    print('qos: %d \n' % message.qos)
+    print('PUMP: V_ONE TURNED OFF')
+    EXAMPLE_SIM.register_component('V_ONE', PowerSrc(ddp=0))
+    print('------------------------------')
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     EXAMPLE_SIM = Simulator()
@@ -567,9 +580,9 @@ if __name__ == '__main__':
         "R_ONE":"pipe1-sensor1",
         "R_TWO":"pipe1-sensor2",
         "R_THREE":"pipe1-sensor3",
-        # "R_FOR":"pipe2-sensor1",
-        # "R_FIVE":"pipe2-senor2",
-        # "R_SIX":"pipe3-sensor3",
+        "R_FOUR":"pipe2-sensor1",
+        "R_FIVE":"pipe2-senor2",
+        "R_SIX":"pipe3-sensor3",
         # "R_SEVEN":"pipe3-sensor1",
         # "R_EIGHT":"pipe3-sensor2",
         # "R_NINE":"pipe3-sensor3",
@@ -578,10 +591,17 @@ if __name__ == '__main__':
         # "R_TWELVE":"pipe4-sensor3"
     }
 
-    client = paho.Client("pipelines")                         # create client object
+    client = paho.Client("pipelines")                         # create client object for publishing
     client.connect(broker, port)                              # establish connection
     client.on_publish = on_publish                            # assign function to callback
 
     for index in publish_list:
         msgcomp = component_data(index,publish_list[index], "L/min")
         ret = client.publish("floors/floor1/data", msgcomp)  # publish
+
+    #mqtt subscriber
+    #clientS = paho.Client(client_id='waterpumps', clean_session=False)
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.connect(broker, port)
+    client.loop_forever()

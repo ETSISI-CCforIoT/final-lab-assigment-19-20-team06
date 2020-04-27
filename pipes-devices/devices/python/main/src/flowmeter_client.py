@@ -37,17 +37,21 @@ import json
 import logging
 import paho.mqtt.client as mqtt
 
-MQTT_BROKER_IP = '127.0.0.1'
-MQTT_BROKER_PORT = 1883
-MQTT_BROKER_TOPIC = 'floors/floor1/data'
+config = json.load(open('config.json', 'r'))
 
-FE_SERVER_HOST = '127.0.0.1'
-FE_SERVER_PORT = 8888
+# Loading configuration file data
+MQTT_BROKER_IP = config.pop('mqtt_broker_ip', '127.0.0.1')
+MQTT_BROKER_PORT = config.pop('mqtt_broker_port', 1883)
+MQTT_BROKER_TOPIC = config.pop('mqtt_broker_topic', 'floors/floor1/data')
+
+FE_SERVER_HOST = config.pop('sim_frontend_ip', '127.0.0.1')
+FE_SERVER_PORT = config.pop('sim_frontend_port', 8888)
 
 # TODO CLIENT_ID and PIPE_ID can be the same if the names in the simulator match with names in the cloud
-CLIENT_ID = 'PIPE_1_S1'
-PIPE_ID = 'pipe1-sensor1'
-REFRESH_PERIOD = 5
+CLIENT_ID = config.pop('flowmeter_sim_id', 'PIPE_1_S1')
+PIPE_ID = config.pop('flowmeter_cloud_id', 'pipe1-sensor1')
+
+REFRESH_PERIOD = config.pop('request_period', 5)
 
 
 async def tcp_connect():

@@ -147,11 +147,19 @@ CMD_RESPONSE_CODE = [
     ('E08', 'Connection refused from SIM SERVER')
 ]
 
-FE_SERVER_HOST = '127.0.0.1'
-FE_SERVER_PORT = 8888
+parser = argparse.ArgumentParser()
+parser.add_argument("-f", "--front-host", type=str, help="Frontend host IPv4 address")
+parser.add_argument("-p", "--front-port", type=int, help="Frontend host TCP port")
+parser.add_argument("-b", "--back-host", type=str, help="Backend host IPv4 address")
+parser.add_argument("-g", "--back-port", type=int, help="Backend host IPv4 address")
 
-SIM_SERVER_HOST = '127.0.0.1'
-SIM_SERVER_PORT = 8887
+args = parser.parse_args()
+
+SIM_SERVER_HOST = '127.0.0.1' if args.back_host is None else args.back_host
+SIM_SERVER_PORT = 8887 if args.back_port is None else args.back_port
+
+FE_SERVER_HOST = '127.0.0.1' if args.front_host is None else args.front_host
+FE_SERVER_PORT = 8888 if args.front_port is None else args.front_port
 
 
 def compose_packet(addr, status, stmsg, **kwargs):

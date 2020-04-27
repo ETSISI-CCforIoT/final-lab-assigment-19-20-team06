@@ -39,15 +39,18 @@ import paho.mqtt.client as mqtt
 
 random.seed()
 
-MQTT_BROKER_IP = '127.0.0.1'
-MQTT_BROKER_PORT = 1883
-MQTT_BROKER_TOPIC = 'floors/floor1/alarms'
+config = json.load(open('config.json', 'r'))
 
-FE_SERVER_HOST = '127.0.0.1'
-FE_SERVER_PORT = 8888
+# Loading configuration file data
+MQTT_BROKER_IP = config.pop('mqtt_broker_ip', '127.0.0.1')
+MQTT_BROKER_PORT = config.pop('mqtt_broker_port', 1883)
+MQTT_BROKER_TOPIC = config.pop('mqtt_broker_topic', 'floors/floor1/alarms')
 
-CLIENT_ID = 'WATER_IN_1'
-CURRENT_VALUE = 100.0
+FE_SERVER_HOST = config.pop('sim_frontend_ip', '127.0.0.1')
+FE_SERVER_PORT = config.pop('sim_frontend_port', 8888)
+
+CLIENT_ID = config.pop('valve_id', 'WATER_IN_1')
+CURRENT_VALUE = config.pop('valve_default', 100.0)
 
 
 async def tcp_connect():

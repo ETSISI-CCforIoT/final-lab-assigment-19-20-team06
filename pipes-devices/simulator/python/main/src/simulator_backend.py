@@ -1,3 +1,36 @@
+"""
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@                              @@@@@,@@@@@@@@@@@%/%@@@@@@@@@@@,@@@@@@@&&@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@   SIMULATOR BACKEND SERVER   @                                   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@                              @                                   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@  · Patricia Gómez            @@@(   ,@@@@@@@       @@@@@@@*   ,@@@@@@@@@@@@@@@@&&@@@@@@@@@@@@@@@@
+@@  · Dharma Lancelot Martínez  @@@@@@@@@@@@@           @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@  · Mario Refoyo              @@@@@@@@@        (          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@  · Pablo Barreda             @@@@@@@@@@                 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@  · Carlos Medina             @@@@@@@@@@                 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@                              @@@@@@@@                    *@@@@@@@@@@@@@@@      (&@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*                                          @        @@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@                                               @        @@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@    /                                              @        @@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@                                                     @        @@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@             @@@@@@@@@                  @@@@@@@@@@@@@@@@.      @@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@            @@@@@@@@@@@@@@(          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@            @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@          * @@@@                                                               @@
+@@@@@@@@@@@@@@@@@@@@@@@ @@@@@@@@@@@                                                               @@
+@@@@@@@@@@@@@@@@@@@@@@*  @@@@@@@@@@    Simulator   process   backend.  Launch   the   simulation  @@
+@@@@@@@@@@@@@@@@@@@@@     @@@@@@@@@  periodically  and  update  the component  values.  The  new  @@
+@@@@@@@@@@@@@@@@&@@         @@@@@@@  information  is  sent  to the frontend to serve  with  this  @@
+@@@@@@@@@@@@@@@@@.            @@@@@  information to any client device.                            @@
+@@@@@@@@@@@@@@@@@           @  @@@@                                                               @@
+@@@@@@@@@@@@@@@@@           @ ,@@@@  Edit define_simulator(sm) function to match to your pipe or  @@
+@@@@@@@@@@@@@@@@@@        /// @@@@@  circuit configuration.                                       @@
+@@@@@@@@@@@@@@@@@@@@   ,/( @@@@@@@@                                                               @@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                                                               @@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+----------------------------------------------------------------------------------------------------
+"""
 import json
 import asyncio
 import logging
@@ -21,6 +54,47 @@ CMD_RESPONSE_CODE = [
     ('E06', 'Bad {} argument'),
     ('E07', 'Command RPC not received')
 ]
+
+
+def define_simulator(sm):
+    sm.register_component('WATER_IN_1', circuit.PowerSrc(ddp=100))
+    sm.register_component('PIPE_1_S1', circuit.Transducers(res=1))
+    sm.register_component('PIPE_1_S2', circuit.Transducers(res=1))
+    sm.register_component('PIPE_1_S3', circuit.Transducers(res=1))
+    sm.register_component('PIPE_1_S4', circuit.Transducers(res=1))
+    sm.register_component('PIPE_1_S5', circuit.Transducers(res=1))
+    sm.register_component('PIPE_1_S6', circuit.Transducers(res=1))
+    sm.register_component('PIPE_2_S1', circuit.Transducers(res=1))
+    sm.register_component('PIPE_4_S1', circuit.Transducers(res=1))
+    sm.register_component('PIPE_3_S1', circuit.Transducers(res=1))
+    sm.register_component('PIPE_3_S2', circuit.Transducers(res=1))
+    sm.register_component('PIPE_4_S2', circuit.Transducers(res=1))
+    sm.register_component('PIPE_2_S2', circuit.Transducers(res=1))
+    sm.register_component('TAP_1', circuit.Transducers(res=1))
+    sm.register_component('TAP_2', circuit.Transducers(res=1))
+    sm.register_component('TAP_3', circuit.Transducers(res=1))
+
+    sm.connect(sm.get_component('WATER_IN_1').one, sm.get_component('PIPE_1_S1').one)
+    sm.connect(sm.get_component('PIPE_1_S1').two, sm.get_component('PIPE_1_S2').one)
+    sm.connect(sm.get_component('PIPE_1_S2').two, sm.get_component('PIPE_1_S3').one)
+    sm.connect(sm.get_component('PIPE_1_S3').two, sm.get_component('PIPE_1_S4').one)
+    sm.connect(sm.get_component('PIPE_1_S4').two, sm.get_component('PIPE_1_S5').one)
+    sm.connect(sm.get_component('PIPE_1_S5').two, sm.get_component('PIPE_1_S6').one)
+    sm.connect(sm.get_component('PIPE_1_S6').two, sm.get_component('PIPE_2_S1').one)
+    sm.connect(sm.get_component('PIPE_2_S1').two, sm.get_component('PIPE_2_S2').one)
+    sm.connect(sm.get_component('PIPE_2_S2').two, sm.get_component('TAP_1').one)
+    sm.connect(sm.get_component('TAP_1').two, sm.get_component('WATER_IN_1').two)
+    sm.connect(sm.get_component('PIPE_1_S6').two, sm.get_component('PIPE_3_S1').one)
+    sm.connect(sm.get_component('PIPE_3_S1').two, sm.get_component('PIPE_3_S2').one)
+    sm.connect(sm.get_component('PIPE_3_S2').two, sm.get_component('TAP_2').one)
+    sm.connect(sm.get_component('TAP_2').two, sm.get_component('WATER_IN_1').two)
+    sm.connect(sm.get_component('PIPE_1_S6').two, sm.get_component('PIPE_4_S1').one)
+    sm.connect(sm.get_component('PIPE_4_S1').two, sm.get_component('PIPE_4_S2').one)
+    sm.connect(sm.get_component('PIPE_4_S2').two, sm.get_component('TAP_3').one)
+    sm.connect(sm.get_component('TAP_3').two, sm.get_component('WATER_IN_1').two)
+
+    sm.reference = sm.get_component('WATER_IN_1').two
+
 
 def compose_packet(addr, status, stmsg, **kwargs):
     packet = {
@@ -120,46 +194,6 @@ async def simulator_client(sm):
             await asyncio.sleep(1)
         except ConnectionRefusedError:
             logger.info('Connection Refused to %s:%d', FE_SERVER_HOST, FE_SERVER_PORT)
-
-
-def define_simulator(sm):
-    sm.register_component('WATER_IN_1', circuit.PowerSrc(ddp=100))
-    sm.register_component('PIPE_1_S1', circuit.Transducers(res=1))
-    sm.register_component('PIPE_1_S2', circuit.Transducers(res=1))
-    sm.register_component('PIPE_1_S3', circuit.Transducers(res=1))
-    sm.register_component('PIPE_1_S4', circuit.Transducers(res=1))
-    sm.register_component('PIPE_1_S5', circuit.Transducers(res=1))
-    sm.register_component('PIPE_1_S6', circuit.Transducers(res=1))
-    sm.register_component('PIPE_2_S1', circuit.Transducers(res=1))
-    sm.register_component('PIPE_4_S1', circuit.Transducers(res=1))
-    sm.register_component('PIPE_3_S1', circuit.Transducers(res=1))
-    sm.register_component('PIPE_3_S2', circuit.Transducers(res=1))
-    sm.register_component('PIPE_4_S2', circuit.Transducers(res=1))
-    sm.register_component('PIPE_2_S2', circuit.Transducers(res=1))
-    sm.register_component('TAP_1', circuit.Transducers(res=1))
-    sm.register_component('TAP_2', circuit.Transducers(res=1))
-    sm.register_component('TAP_3', circuit.Transducers(res=1))
-
-    sm.connect(sm.get_component('WATER_IN_1').one, sm.get_component('PIPE_1_S1').one)
-    sm.connect(sm.get_component('PIPE_1_S1').two, sm.get_component('PIPE_1_S2').one)
-    sm.connect(sm.get_component('PIPE_1_S2').two, sm.get_component('PIPE_1_S3').one)
-    sm.connect(sm.get_component('PIPE_1_S3').two, sm.get_component('PIPE_1_S4').one)
-    sm.connect(sm.get_component('PIPE_1_S4').two, sm.get_component('PIPE_1_S5').one)
-    sm.connect(sm.get_component('PIPE_1_S5').two, sm.get_component('PIPE_1_S6').one)
-    sm.connect(sm.get_component('PIPE_1_S6').two, sm.get_component('PIPE_2_S1').one)
-    sm.connect(sm.get_component('PIPE_2_S1').two, sm.get_component('PIPE_2_S2').one)
-    sm.connect(sm.get_component('PIPE_2_S2').two, sm.get_component('TAP_1').one)
-    sm.connect(sm.get_component('TAP_1').two, sm.get_component('WATER_IN_1').two)
-    sm.connect(sm.get_component('PIPE_1_S6').two, sm.get_component('PIPE_3_S1').one)
-    sm.connect(sm.get_component('PIPE_3_S1').two, sm.get_component('PIPE_3_S2').one)
-    sm.connect(sm.get_component('PIPE_3_S2').two, sm.get_component('TAP_2').one)
-    sm.connect(sm.get_component('TAP_2').two, sm.get_component('WATER_IN_1').two)
-    sm.connect(sm.get_component('PIPE_1_S6').two, sm.get_component('PIPE_4_S1').one)
-    sm.connect(sm.get_component('PIPE_4_S1').two, sm.get_component('PIPE_4_S2').one)
-    sm.connect(sm.get_component('PIPE_4_S2').two, sm.get_component('TAP_3').one)
-    sm.connect(sm.get_component('TAP_3').two, sm.get_component('WATER_IN_1').two)
-
-    sm.reference = sm.get_component('WATER_IN_1').two
 
 
 async def main(sm):

@@ -31,27 +31,62 @@
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ----------------------------------------------------------------------------------------------------
 """
+import os
 import asyncio
 import time
 import json
 import logging
 import paho.mqtt.client as mqtt
 
+config = dict()
+try:
+    config = json.load(open('config.json', 'r'))
+except json.JSONDecodeError:
+    pass
+except IOError:
+    pass
+
+# DEFAULT NON SET VALUES
+JSON_HIGH_PRIOR = False # True: Configuration Json File has high prority than environ variables, False: Reverse
 config = json.load(open('config.json', 'r'))
 
 # Loading configuration file data
-MQTT_BROKER_IP = config.pop('mqtt_broker_ip', '127.0.0.1')
-MQTT_BROKER_PORT = config.pop('mqtt_broker_port', 1883)
-MQTT_BROKER_TOPIC = config.pop('mqtt_broker_topic', 'floors/floor1/data')
-
-FE_SERVER_HOST = config.pop('sim_frontend_ip', '127.0.0.1')
-FE_SERVER_PORT = config.pop('sim_frontend_port', 8888)
+MQTT_BROKER_IP = '127.0.0.1'
+MQTT_BROKER_PORT = 1883
+MQTT_BROKER_TOPIC = 'floors/floor1/data'
+FE_SERVER_HOST = '127.0.0.1'
+FE_SERVER_PORT = 8888
 
 # TODO CLIENT_ID and PIPE_ID can be the same if the names in the simulator match with names in the cloud
-CLIENT_ID = config.pop('flowmeter_sim_id', 'PIPE_1_S1')
-PIPE_ID = config.pop('flowmeter_cloud_id', 'pipe1-sensor1')
+CLIENT_ID = 'PIPE_1_S1'
+PIPE_ID = 'pipe1-sensor1'
+REFRESH_PERIOD = 5
 
-REFRESH_PERIOD = config.pop('request_period', 5)
+def set_parameters_from_dict(in_dict):
+    global MQTT_BROKER_IP, \
+           MQTT_BROKER_PORT, \
+           MQTT_BROKER_TOPIC, \
+           FE_SERVER_HOST, \
+           FE_SERVER_PORT, \
+           CLIENT_ID, \
+           PIPE_ID, \
+           REFRESH_PERIOD
+    MQTT_BROKER_IP = in_dict.pop('mqtt_broker_ip', MQTT_BROKER_IP)
+    MQTT_BROKER_PORT = in_dict.pop('mqtt_broker_port', MQTT_BROKER_PORT)
+    MQTT_BROKER_TOPIC = in_dict.pop('mqtt_broker_topic', MQTT_BROKER_TOPIC)
+    FE_SERVER_HOST = in_dict.pop('sim_frontend_ip', FE_SERVER_HOST)
+    FE_SERVER_PORT = in_dict.pop('sim_frontend_port', FE_SERVER_PORT)
+    CLIENT_ID = in_dict.pop('flowmeter_sim_id', CLIENT_ID)
+    PIPE_ID = in_dict.pop('flowmeter_cloud_id', PIPE_ID)
+    REFRESH_PERIOD = in_dict.pop('request_period', REFRESH_PERIOD)
+
+
+if JSON_HIGH_PRIOR:
+    set_parameters_from_dict(os.environ)
+    set_parameters_from_dict(config)
+else:
+    set_parameters_from_dict(config)
+    set_parameters_from_dict(os.environ)
 
 
 async def tcp_connect():

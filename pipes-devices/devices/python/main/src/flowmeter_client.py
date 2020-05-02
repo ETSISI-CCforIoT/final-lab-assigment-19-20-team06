@@ -88,6 +88,16 @@ else:
     set_parameters_from_dict(config)
     set_parameters_from_dict(os.environ)
 
+print('-'*50+'\nCONFIGURATION\n'+'-'*50)
+print(f'\tREFRESH_PERIOD: {REFRESH_PERIOD}')
+print(f'\tPIPE_ID: {PIPE_ID}')
+print(f'\tCLIENT_ID: {CLIENT_ID}')
+print(f'\tFE_SERVER_PORT: {FE_SERVER_PORT}')
+print(f'\tFE_SERVER_HOST: {FE_SERVER_HOST}')
+print(f'\tMQTT_BROKER_TOPIC: {MQTT_BROKER_TOPIC}')
+print(f'\tMQTT_BROKER_PORT: {MQTT_BROKER_PORT}')
+print(f'\tMQTT_BROKER_IP: {MQTT_BROKER_IP}')
+print('-'*50)
 
 async def tcp_connect():
     logger = logging.getLogger(CLIENT_ID)

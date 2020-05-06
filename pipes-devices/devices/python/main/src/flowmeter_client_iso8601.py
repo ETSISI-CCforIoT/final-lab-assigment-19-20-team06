@@ -34,6 +34,7 @@
 import os
 import asyncio
 import time
+import datetime
 import json
 import logging
 import paho.mqtt.client as mqtt
@@ -159,7 +160,7 @@ def compose_packet(flow, unit):
         "id": PIPE_ID,
         "flow": round(flow, 4),
         "unit": unit,
-        "timestamp": time.time()
+        "timestamp": datetime.datetime.utcnow().isoformat()  #time.time()
     }
     return json.dumps(packet)
 

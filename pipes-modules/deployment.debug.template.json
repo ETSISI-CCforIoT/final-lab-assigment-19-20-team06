@@ -100,7 +100,8 @@
         "schemaVersion": "1.0",
         "routes": {
           "MqttClientModuleToIoTHub": "FROM /messages/modules/MqttClientModule/outputs/output1 INTO BrokeredEndpoint(\"/modules/ProcessingModule/inputs/input1\")",
-          "ProcessingModuleToIoTHub": "FROM /messages/modules/ProcessingModule/outputs/* INTO $upstream"
+          "ProcessingModuleToIoTMqttClientModule": "FROM /messages/modules/ProcessingModule/outputs/output1 INTO BrokeredEndpoint(\"/modules/MqttClientModule/inputs/input1\")",
+          "ProcessingModuleToIoTHub": "FROM /messages/modules/ProcessingModule/outputs/output2 INTO $upstream"
         },
         "storeAndForwardConfiguration": {
           "timeToLiveSecs": 7200
@@ -109,7 +110,7 @@
     },
     "ProcessingModule": {
       "properties.desired":{
-          "Threshold":25
+          "Threshold":0.3
       }
     }
   }

@@ -58,7 +58,7 @@
         },
         "modules": {
           "ProcessingModule": {
-            "version": "1.1",
+            "version": "1.4",
             "type": "docker",
             "status": "running",
             "restartPolicy": "always",
@@ -81,7 +81,7 @@
             }
           },
           "MqttClientModule": {
-            "version": "1.1",
+            "version": "1.4",
             "type": "docker",
             "status": "running",
             "restartPolicy": "always",
@@ -97,8 +97,9 @@
       "properties.desired": {
         "schemaVersion": "1.0",
         "routes": {
-          "MqttClientModuleToIoTHub": "FROM /messages/modules/MqttClientModule/outputs/output1 INTO BrokeredEndpoint(\"/modules/ProcessingModule/inputs/input1\")",
-          "ProcessingModuleToIoTHub": "FROM /messages/modules/ProcessingModule/outputs/* INTO $upstream"
+          "MqttClientModuleToProcessingModule": "FROM /messages/modules/MqttClientModule/outputs/output1 INTO BrokeredEndpoint(\"/modules/ProcessingModule/inputs/input1\")",
+          "ProcessingModuleToIoTMqttClientModule": "FROM /messages/modules/ProcessingModule/outputs/output1 INTO BrokeredEndpoint(\"/modules/MqttClientModule/inputs/input1\")",
+          "ProcessingModuleToIoTHub": "FROM /messages/modules/ProcessingModule/outputs/output2 INTO $upstream"
         },
         "storeAndForwardConfiguration": {
           "timeToLiveSecs": 7200
@@ -107,7 +108,7 @@
     },
     "ProcessingModule": {
       "properties.desired":{
-          "Threshold":25
+          "Threshold":0.3
       }
     }
   }

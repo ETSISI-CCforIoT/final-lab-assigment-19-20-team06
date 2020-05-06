@@ -1,0 +1,9 @@
+{
+        "mqtt_broker_ip": "40.68.175.17",
+        "mqtt_broker_port": 1883,
+        "mqtt_broker_topic": "/floors/floor1/data",
+        "sim_frontend_ip": "192.168.187.133", 
+        "sim_frontend_port": 8888,
+        "flowmeter_sim_id": "PIPE_1_S1",
+        "flowmeter_cloud_id": "pipe1-sensor1"
+}
